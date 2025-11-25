@@ -1,0 +1,123 @@
+{% extends 'banco/base.html' %}
+
+{% block title %}Cuentas - Minibanco{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>💳 Gestión de Cuentas Bancarias</h2>
+        <p class="text-muted">Abre y administra cuentas para los clientes</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">➕ Abrir Nueva Cuenta</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Cliente</label>
+                        <select name="cliente_id" class="form-select" required>
+                            <option value="">Selecciona un cliente...</option>
+                            {% for cliente in clientes %}
+                            <option value="{{ cliente.id }}">
+                                {{ cliente.nombres }} ({{ cliente.identificacion }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if not clientes %}
+                        <div class="text-danger small mt-1">
+                            No hay clientes registrados. <a href="{% url 'banco:clientes' %}">Registra un cliente
+                                primero</a>.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Cuenta</label>
+                        <select name="tipo_cuenta" class="form-select" required>
+                            <option value="">Selecciona el tipo de cuenta...</option>
+                            <option value="AHORROS">Cuenta de Ahorros</option>
+                            <option value="CORRIENTE">Cuenta Corriente</option>
+                            <option value="CDT">CDT</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Saldo Inicial</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" name="saldo_inicial" class="form-control" value="0" min="0" step="0.01"
+                                required>
+                        </div>
+                        <div class="form-text">Ingresa 0 si no hay saldo inicial</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100" {% if not clientes %}disabled{% endif %}>
+                        💰 Abrir Cuenta
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📋 Cuentas Activas</h5>
+            </div>
+            <div class="card-body">
+                {% if cuentas %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Número</th>
+                                <th>Cliente</th>
+                                <th>Tipo</th>
+                                <th>Saldo</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cuenta in cuentas %}
+                            <tr>
+                                <td>
+                                    <strong>{{ cuenta.numero_cuenta }}</strong>
+                                </td>
+                                <td>{{ cuenta.cliente_nombre }}</td>
+                                <td>
+                                    <span class="badge 
+                                            {% if cuenta.tipo_cuenta == 'AHORROS' %}bg-success
+                                            {% elif cuenta.tipo_cuenta == 'CORRIENTE' %}bg-primary
+                                            {% else %}bg-warning{% endif %}">
+                                        {{ cuenta.tipo_cuenta }}
+                                    </span>
+                                </td>
+                                <td>${{ cuenta.saldo }}</td>
+                                <td>
+                                    <span class="badge {% if cuenta.activa %}bg-success{% else %}bg-danger{% endif %}">
+                                        {% if cuenta.activa %}Activa{% else %}Inactiva{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted">No hay cuentas registradas</p>
+                    <p class="text-muted small">Usa el formulario para abrir la primera cuenta</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

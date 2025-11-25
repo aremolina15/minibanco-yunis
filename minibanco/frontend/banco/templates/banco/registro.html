@@ -1,0 +1,93 @@
+{% extends 'banco/base.html' %}
+
+{% block title %}Registro - Minibanco{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">📝 Registro de Cliente</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <h6 class="border-bottom pb-2">Información Personal</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tipo de Identificación</label>
+                            <select name="tipo_identificacion" class="form-select" required>
+                                <option value="CC">Cédula de Ciudadanía</option>
+                                <option value="CE">Cédula de Extranjería</option>
+                                <option value="PA">Pasaporte</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Número de Identificación</label>
+                            <input type="text" name="identificacion" class="form-control" placeholder="Ej: 123456789"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nombres Completos</label>
+                        <input type="text" name="nombres" class="form-control" placeholder="Ej: Juan Pérez García"
+                            required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" placeholder="Ej: juan@email.com"
+                                required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" name="telefono" class="form-control" placeholder="Ej: 3001234567"
+                                required>
+                        </div>
+                    </div>
+
+                    <h6 class="border-bottom pb-2 mt-4">Credenciales de Acceso</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre de Usuario</label>
+                            <input type="text" name="username" class="form-control"
+                                placeholder="Elige un username único" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Contraseña</label>
+                            <input type="password" name="password" class="form-control"
+                                placeholder="Crea una contraseña segura" required>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <small>
+                            📌 <strong>Nota:</strong> Al registrarte, se creará automáticamente
+                            tu perfil de cliente en el sistema.
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">
+                        ✅ Registrarme en Minibanco
+                    </button>
+                </form>
+
+                <hr>
+
+                <div class="text-center">
+                    <p class="mb-0">¿Ya tienes cuenta?</p>
+                    <a href="{% url 'banco:login' %}" class="btn btn-outline-primary btn-sm mt-2">
+                        🔐 Inicia sesión aquí
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

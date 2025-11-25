@@ -1,0 +1,63 @@
+{% extends 'banco/base.html' %}
+
+{% block title %}Abrir Cuenta - Minibanco{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">💰 Abrir Nueva Cuenta</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Cuenta</label>
+                        <select name="tipo_cuenta" class="form-select" required>
+                            <option value="">Selecciona el tipo de cuenta...</option>
+                            <option value="AHORROS">💵 Cuenta de Ahorros</option>
+                            <option value="CORRIENTE">🏦 Cuenta Corriente</option>
+                            <option value="CDT">📈 CDT (Certificado de Depósito a Término)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Saldo Inicial</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" name="saldo_inicial" class="form-control" value="0" min="0" step="0.01"
+                                required>
+                        </div>
+                        <div class="form-text">
+                            💡 <strong>Nota:</strong>
+                            <ul class="mt-1">
+                                <li><strong>Ahorros:</strong> Ideal para guardar dinero con intereses</li>
+                                <li><strong>Corriente:</strong> Para operaciones frecuentes, cheques</li>
+                                <li><strong>CDT:</strong> Inversión a plazo fijo con mayor rentabilidad</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <small>
+                            📌 <strong>Información importante:</strong>
+                            Al abrir una cuenta, se generará automáticamente un número de cuenta único.
+                            Podrás realizar transferencias entre tus cuentas desde el panel de transferencias.
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">
+                        ✅ Abrir Cuenta
+                    </button>
+
+                    <a href="{% url 'banco:cliente_dashboard' %}" class="btn btn-outline-secondary w-100 mt-2">
+                        ↩️ Volver al Dashboard
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

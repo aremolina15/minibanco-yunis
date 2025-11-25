@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Minibanco{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+        }
+
+        .main-container {
+            min-height: calc(100vh - 120px);
+        }
+
+        .user-info {
+            color: white;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'banco:index' %}">🏦 Minibanco</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav me-auto">
+                    {% if request.session.usuario %}
+                    {% if request.session.usuario.tipo == 'admin' %}
+                    <a class="nav-link" href="{% url 'banco:admin_dashboard' %}">📊 Dashboard</a>
+                    <a class="nav-link" href="{% url 'banco:clientes' %}">👥 Clientes</a>
+                    <a class="nav-link" href="{% url 'banco:cuentas' %}">💳 Cuentas</a>
+                    {% else %}
+                    <a class="nav-link" href="{% url 'banco:cliente_dashboard' %}">📊 Mi Cuenta</a>
+                    {% endif %}
+                    <a class="nav-link" href="{% url 'banco:transacciones' %}">💰 Transacciones</a>
+                    {% endif %}
+                </div>
+                <div class="navbar-nav ms-auto">
+                    {% if request.session.usuario %}
+                    <span class="user-info">
+                        Hola,
+                        <strong>
+                            {% if request.session.usuario.nombres %}
+                            {{ request.session.usuario.nombres }}
+                            {% else %}
+                            {{ request.session.usuario.username }}
+                            {% endif %}
+                        </strong>
+                        ({{ request.session.usuario.tipo }})
+                    </span>
+                    <a class="nav-link" href="{% url 'banco:logout' %}">🚪 Cerrar Sesión</a>
+                    {% else %}
+                    <a class="nav-link" href="{% url 'banco:login' %}">🔐 Iniciar Sesión</a>
+                    <a class="nav-link" href="{% url 'banco:registro' %}">📝 Registrarse</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="container mt-4">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">Minibanco &copy; 2024 - Sistema de Gestión Bancaria</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

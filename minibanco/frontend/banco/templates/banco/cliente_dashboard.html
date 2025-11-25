@@ -1,0 +1,201 @@
+{% extends 'banco/base.html' %}
+
+{% block title %}Mi Cuenta - Minibanco{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>👋 Bienvenido, {{ usuario.nombres|default:usuario.username }}</h2>
+        <p class="text-muted">Este es tu panel de control personal</p>
+    </div>
+</div>
+
+<!-- Debug temporal - eliminar después de verificar -->
+{% if debug %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h6>🔍 Información de Debug:</h6>
+            <p><strong>Usuario ID:</strong> {{ usuario.id }}</p>
+            <p><strong>Tipo:</strong> {{ usuario.tipo }}</p>
+            <p><strong>Número de cuentas:</strong> {{ cuentas|length }}</p>
+            <pre>{{ cuentas|pprint }}</pre>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-4">
+    <!-- Columna izquierda: Lista de cuentas -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">💳 Mis Cuentas Bancarias</h5>
+                    <a href="{% url 'banco:abrir_cuenta' %}" class="btn btn-success btn-sm">
+                        ➕ Abrir Nueva Cuenta
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if cuentas %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Número de Cuenta</th>
+                                <th>Tipo</th>
+                                <th>Saldo</th>
+                                <th>Fecha Apertura</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cuenta in cuentas %}
+                            <tr>
+                                <td>
+                                    <strong>{{ cuenta.numero_cuenta }}</strong>
+                                    {% if cuenta_mayor_saldo and cuenta_mayor_saldo.id == cuenta.id %}
+                                    <span class="badge bg-warning ms-1">Principal</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if cuenta.tipo_cuenta == 'AHORROS' %}bg-success
+                                        {% elif cuenta.tipo_cuenta == 'CORRIENTE' %}bg-primary
+                                        {% else %}bg-warning{% endif %}">
+                                        {{ cuenta.tipo_cuenta }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong class="text-success">${{ cuenta.saldo }}</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ cuenta.fecha_apertura|date:"d/m/Y" }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge {% if cuenta.activa %}bg-success{% else %}bg-danger{% endif %}">
+                                        {% if cuenta.activa %}Activa{% else %}Inactiva{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'banco:transacciones' %}" class="btn btn-outline-primary">
+                                            💸 Operar
+                                        </a>
+                                        <a href="{% url 'banco:transferir' %}" class="btn btn-outline-info">
+                                            🔄 Transferir
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <span style="font-size: 3rem;">💳</span>
+                    </div>
+                    <p class="text-muted">No tienes cuentas activas</p>
+                    <p class="text-muted small mb-3">Comienza abriendo tu primera cuenta bancaria</p>
+                    <a href="{% url 'banco:abrir_cuenta' %}" class="btn btn-primary">
+                        💰 Abrir mi primera cuenta
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna derecha: Acciones y resumen -->
+    <div class="col-md-4">
+        <!-- Card de Acciones Disponibles -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">🚀 Acciones Disponibles</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'banco:abrir_cuenta' %}" class="btn btn-success">
+                        💰 Abrir Nueva Cuenta
+                    </a>
+                    <a href="{% url 'banco:transferir' %}" class="btn btn-primary" {% if cuentas|length < 2 %}disabled{%
+                        endif %}>
+                        🔄 Transferir entre Cuentas
+                    </a>
+                    <a href="{% url 'banco:transacciones' %}" class="btn btn-outline-info" {% if not cuentas
+                        %}disabled{% endif %}>
+                        💸 Realizar Transacciones
+                    </a>
+                    <a href="{% url 'banco:consultar_saldo' %}" class="btn btn-outline-secondary" {% if not cuentas %}disabled{% endif %}>
+                        📊 Consultar Saldos
+                    </a>
+                </div>
+                {% if cuentas|length < 2 %} <div class="mt-2">
+                    <small class="text-muted">💡 Necesitas al menos 2 cuentas para transferir</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Card de Resumen Financiero -->
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5 class="mb-0">📈 Resumen Financiero</h5>
+        </div>
+        <div class="card-body">
+            {% if cuentas %}
+            <div class="mb-3">
+                <p><strong>Total de Cuentas:</strong>
+                    <span class="badge bg-primary">{{ total_cuentas }}</span>
+                </p>
+                <p><strong>Saldo Total:</strong>
+                    <span class="text-success fw-bold">${{ saldo_total|floatformat:2 }}</span>
+                </p>
+            </div>
+
+            {% if cuenta_mayor_saldo %}
+            <div class="border-top pt-2">
+                <p class="mb-1"><strong>Cuenta Principal:</strong></p>
+                <p class="mb-1">
+                    <span class="badge bg-dark">{{ cuenta_mayor_saldo.numero_cuenta }}</span>
+                    <span class="badge 
+                            {% if cuenta_mayor_saldo.tipo_cuenta == 'AHORROS' %}bg-success
+                            {% elif cuenta_mayor_saldo.tipo_cuenta == 'CORRIENTE' %}bg-primary
+                            {% else %}bg-warning{% endif %}">
+                        {{ cuenta_mayor_saldo.tipo_cuenta }}
+                    </span>
+                </p>
+                <p class="mb-0">
+                    <strong>Saldo:</strong>
+                    <span class="text-success">${{ cuenta_mayor_saldo.saldo }}</span>
+                </p>
+            </div>
+            {% endif %}
+            {% else %}
+            <p class="text-muted">No hay cuentas activas</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Card de Información Personal -->
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5 class="mb-0">ℹ️ Mi Información</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Usuario:</strong> {{ usuario.username }}</p>
+            <p><strong>Nombre:</strong> {{ usuario.nombres|default:"No especificado" }}</p>
+            <p><strong>Email:</strong> {{ usuario.email|default:"No especificado" }}</p>
+            <p><strong>Tipo:</strong> <span class="badge bg-secondary">Cliente</span></p>
+            <p><strong>ID Usuario:</strong> <small class="text-muted">{{ usuario.id }}</small></p>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

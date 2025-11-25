@@ -1,0 +1,111 @@
+{% extends 'banco/base.html' %}
+
+{% block title %}Dashboard Admin - Minibanco{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>📊 Panel de Administración</h2>
+        <p class="text-muted">Bienvenido al panel de control del administrador</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4 mb-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_clientes }}</h4>
+                        <p class="mb-0">Clientes Registrados</p>
+                    </div>
+                    <div class="align-self-center">
+                        <h3>👥</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_cuentas }}</h4>
+                        <p class="mb-0">Cuentas Activas</p>
+                    </div>
+                    <div class="align-self-center">
+                        <h3>💳</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>Admin</h4>
+                        <p class="mb-0">Tipo de Usuario</p>
+                    </div>
+                    <div class="align-self-center">
+                        <h3>⚡</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">🚀 Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'banco:clientes' %}" class="btn btn-outline-primary">
+                        👥 Gestionar Clientes
+                    </a>
+                    <a href="{% url 'banco:cuentas' %}" class="btn btn-outline-success">
+                        💳 Abrir Cuentas
+                    </a>
+                    <a href="{% url 'banco:transacciones' %}" class="btn btn-outline-info">
+                        💰 Realizar Transacciones
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📋 Últimos Clientes Registrados</h5>
+            </div>
+            <div class="card-body">
+                {% if clientes %}
+                <div class="list-group">
+                    {% for cliente in clientes %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ cliente.nombres }}</h6>
+                            <small>{{ cliente.identificacion }}</small>
+                        </div>
+                        <p class="mb-1 small">{{ cliente.email }}</p>
+                        <small class="text-muted">Usuario: {{ cliente.username }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No hay clientes registrados</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

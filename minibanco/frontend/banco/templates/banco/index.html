@@ -1,0 +1,64 @@
+{% extends 'banco/base.html' %}
+
+{% block title %}Inicio - Minibanco{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Bienvenido a Minibanco Yunis</h1>
+            <p class="lead">Sistema de gestión bancaria completo con Django y FastAPI</p>
+            <hr class="my-4">
+            <p>Gestiona clientes, cuentas y transacciones de forma segura y eficiente.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">👥 Gestión de Clientes</h5>
+                <p class="card-text">Registra y administra la información de los clientes del banco.</p>
+                <ul class="text-start">
+                    <li>Registro de clientes</li>
+                    <li>Consulta de información</li>
+                    <li>Gestión de datos</li>
+                </ul>
+                <a href="{% url 'banco:clientes' %}" class="btn btn-primary">Administrar Clientes</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">💳 Gestión de Cuentas</h5>
+                <p class="card-text">Abre y administra diferentes tipos de cuentas bancarias.</p>
+                <ul class="text-start">
+                    <li>Cuentas de ahorros</li>
+                    <li>Cuentas corrientes</li>
+                    <li>CDT</li>
+                </ul>
+                <a href="{% url 'banco:cuentas' %}" class="btn btn-primary">Administrar Cuentas</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">💰 Operaciones Bancarias</h5>
+                <p class="card-text">Realiza transacciones y consultas de saldo.</p>
+                <ul class="text-start">
+                    <li>Consignaciones</li>
+                    <li>Retiros</li>
+                    <li>Consultas de saldo</li>
+                </ul>
+                <a href="{% url 'banco:transacciones' %}" class="btn btn-primary">Realizar Transacciones</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

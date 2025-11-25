@@ -1,0 +1,204 @@
+{% extends 'banco/base.html' %}
+
+{% block title %}Transferir - Minibanco{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>💸 Transferir entre Cuentas</h2>
+        <p class="text-muted">Realiza transferencias entre tus cuentas bancarias</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">🔄 Realizar Transferencia</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="transferenciaForm">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Cuenta de Origen</label>
+                        <select name="cuenta_origen_id" class="form-select" id="cuentaOrigen" required>
+                            <option value="">Selecciona cuenta origen...</option>
+                            {% for cuenta in cuentas %}
+                            <option value="{{ cuenta.id }}" data-saldo="{{ cuenta.saldo }}">
+                                {{ cuenta.numero_cuenta }} - {{ cuenta.tipo_cuenta }} (Saldo: ${{ cuenta.saldo }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Cuenta de Destino</label>
+                        <select name="cuenta_destino_id" class="form-select" id="cuentaDestino" required>
+                            <option value="">Selecciona cuenta destino...</option>
+                            {% for cuenta in cuentas %}
+                            <option value="{{ cuenta.id }}">
+                                {{ cuenta.numero_cuenta }} - {{ cuenta.tipo_cuenta }} (Saldo: ${{ cuenta.saldo }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Monto a Transferir</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" name="monto" class="form-control" id="montoInput" min="0" step="0.01"
+                                required>
+                        </div>
+                        <div class="form-text" id="saldoInfo">
+                            Selecciona una cuenta origen para ver el saldo disponible
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Descripción (Opcional)</label>
+                        <textarea name="descripcion" class="form-control" rows="2"
+                            placeholder="Ej: Transferencia para ahorros"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                        💰 Realizar Transferencia
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📋 Mis Cuentas Disponibles</h5>
+            </div>
+            <div class="card-body">
+                {% if cuentas %}
+                <div class="list-group">
+                    {% for cuenta in cuentas %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ cuenta.numero_cuenta }}</h6>
+                            <span class="badge 
+                                    {% if cuenta.tipo_cuenta == 'AHORROS' %}bg-success
+                                    {% elif cuenta.tipo_cuenta == 'CORRIENTE' %}bg-primary
+                                    {% else %}bg-warning{% endif %}">
+                                {{ cuenta.tipo_cuenta }}
+                            </span>
+                        </div>
+                        <p class="mb-1">Saldo disponible: <strong class="text-success">${{ cuenta.saldo }}</strong></p>
+                        <small class="text-muted">
+                            {% if cuenta.activa %}
+                            <span class="text-success">● Activa</span>
+                            {% else %}
+                            <span class="text-danger">● Inactiva</span>
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted">No tienes cuentas disponibles</p>
+                    <a href="{% url 'banco:abrir_cuenta' %}" class="btn btn-outline-primary btn-sm">
+                        💰 Abrir mi primera cuenta
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">ℹ️ Información de Transferencias</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <small>
+                        <strong>💡 Características:</strong>
+                        <ul class="mb-0 mt-1">
+                            <li>Transferencias instantáneas entre tus cuentas</li>
+                            <li>Sin costos adicionales</li>
+                            <li>Disponible 24/7</li>
+                            <li>Registro completo en historial</li>
+                        </ul>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const cuentaOrigen = document.getElementById('cuentaOrigen');
+        const cuentaDestino = document.getElementById('cuentaDestino');
+        const montoInput = document.getElementById('montoInput');
+        const saldoInfo = document.getElementById('saldoInfo');
+        const submitBtn = document.getElementById('submitBtn');
+        const form = document.getElementById('transferenciaForm');
+
+        function actualizarInformacion() {
+            const origenOption = cuentaOrigen.options[cuentaOrigen.selectedIndex];
+            let saldo = 0;
+
+            if (origenOption) {
+                // Convertir el saldo a número
+                const saldoStr = origenOption.getAttribute('data-saldo');
+                saldo = parseFloat(saldoStr) || 0;
+            }
+
+            if (origenOption && saldo > 0) {
+                saldoInfo.innerHTML = `Saldo disponible: $${saldo.toFixed(2)}`;
+                saldoInfo.className = 'form-text text-success';
+            } else {
+                saldoInfo.innerHTML = 'Selecciona una cuenta origen para ver el saldo disponible';
+                saldoInfo.className = 'form-text text-muted';
+            }
+
+            // Validar que las cuentas sean diferentes
+            if (cuentaOrigen.value && cuentaDestino.value && cuentaOrigen.value === cuentaDestino.value) {
+                saldoInfo.innerHTML = '❌ No puedes transferir a la misma cuenta';
+                saldoInfo.className = 'form-text text-danger';
+                submitBtn.disabled = true;
+            } else {
+                submitBtn.disabled = false;
+            }
+        }
+
+        cuentaOrigen.addEventListener('change', actualizarInformacion);
+        cuentaDestino.addEventListener('change', actualizarInformacion);
+
+        form.addEventListener('submit', function (e) {
+            const origenOption = cuentaOrigen.options[cuentaOrigen.selectedIndex];
+            let saldo = 0;
+
+            if (origenOption) {
+                const saldoStr = origenOption.getAttribute('data-saldo');
+                saldo = parseFloat(saldoStr) || 0;
+            }
+
+            const monto = parseFloat(montoInput.value) || 0;
+
+            if (monto > saldo) {
+                e.preventDefault();
+                alert('❌ Error: El monto de transferencia no puede ser mayor al saldo disponible.');
+                montoInput.focus();
+            }
+
+            if (cuentaOrigen.value === cuentaDestino.value) {
+                e.preventDefault();
+                alert('❌ Error: No puedes transferir a la misma cuenta.');
+            }
+        });
+
+        // Inicializar
+        actualizarInformacion();
+    });
+</script>
+{% endblock %}
