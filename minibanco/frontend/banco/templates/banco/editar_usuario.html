@@ -1,0 +1,85 @@
+{% extends 'banco/base.html' %}
+{% load static %}
+
+{% block title %}Editar Usuario - Minibanco{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="fas fa-user-edit"></i> Editar Usuario</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Username:</strong></label>
+                            <input type="text" class="form-control" value="{{ usuario_edit.username }}" disabled>
+                            <small class="text-muted">El username no se puede modificar</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Tipo:</strong></label>
+                            <input type="text" class="form-control" value="{{ usuario_edit.tipo }}" disabled>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="nombres" class="form-label">Nombres</label>
+                            <input type="text" class="form-control" id="nombres" name="nombres" 
+                                   value="{{ usuario_edit.nombres }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ usuario_edit.email }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" 
+                                   value="{{ usuario_edit.telefono }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   placeholder="Dejar en blanco para no cambiar">
+                            <small class="text-muted">Solo complete si desea cambiar la contraseña</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="activo" class="form-label">Estado</label>
+                            <select class="form-select" id="activo" name="activo">
+                                <option value="true" {% if usuario_edit.activo %}selected{% endif %}>Activo</option>
+                                <option value="false" {% if not usuario_edit.activo %}selected{% endif %}>Inactivo</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                            <a href="{% url 'banco:admin_usuarios' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

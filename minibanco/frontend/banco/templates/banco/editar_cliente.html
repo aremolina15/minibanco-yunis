@@ -1,0 +1,75 @@
+{% extends 'banco/base.html' %}
+{% load static %}
+
+{% block title %}Editar Cliente - Minibanco{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="fas fa-user-edit"></i> Editar Cliente</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Identificación:</strong></label>
+                            <input type="text" class="form-control" value="{{ cliente_edit.identificacion }}" disabled>
+                            <small class="text-muted">La identificación no se puede modificar</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tipo_identificacion" class="form-label">Tipo de Identificación</label>
+                            <select class="form-select" id="tipo_identificacion" name="tipo_identificacion">
+                                <option value="CC" {% if cliente_edit.tipo_identificacion == 'CC' %}selected{% endif %}>Cédula de Ciudadanía</option>
+                                <option value="CE" {% if cliente_edit.tipo_identificacion == 'CE' %}selected{% endif %}>Cédula de Extranjería</option>
+                                <option value="TI" {% if cliente_edit.tipo_identificacion == 'TI' %}selected{% endif %}>Tarjeta de Identidad</option>
+                                <option value="PA" {% if cliente_edit.tipo_identificacion == 'PA' %}selected{% endif %}>Pasaporte</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="nombres" class="form-label">Nombres Completos</label>
+                            <input type="text" class="form-control" id="nombres" name="nombres" 
+                                   value="{{ cliente_edit.nombres }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ cliente_edit.email }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" 
+                                   value="{{ cliente_edit.telefono }}" required>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                            <a href="{% url 'banco:clientes' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

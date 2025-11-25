@@ -528,3 +528,373 @@ def transferir_view(request):
         'cuentas': cuentas,
         'usuario': usuario
     })
+
+# =================== VISTAS CRUD PARA ADMINISTRADOR ===================
+
+# CRUD USUARIOS
+def admin_usuarios(request):
+    """Gestión de usuarios (solo admin)"""
+    usuario = request.session.get('usuario')
+    if not usuario or usuario.get('tipo') != 'admin':
+        messages.error(request, 'Acceso denegado. Se requieren privilegios de administrador.')
+        return redirect('banco:login')
+    
+    token = request.session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    try:
+        response = requests.get(f"{settings.API_BASE_URL}/admin/usuarios/", headers=headers)
+        if response.status_code == 200:
+            usuarios = response.json()
+        else:
+            usuarios = []
+            messages.error(request, 'Error al obtener usuarios')
+    except Exception as e:
+        usuarios = []
+        messages.error(request, f'Error de conexión: {str(e)}')
+    
+    return render(request, 'banco/usuarios.html', {
+        'usuarios': usuarios,
+        'usuario': usuario
+    })
+
+def admin_editar_usuario(request, usuario_id):
+    """Editar un usuario (solo admin)"""
+    usuario = request.session.get('usuario')
+    if not usuario or usuario.get('tipo') != 'admin':
+        messages.error(request, 'Acceso denegado.')
+        return redirect('banco:login')
+    
+    token = request.session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    # Obtener datos del usuario
+    try:
+        response = requests.get(f"{settings.API_BASE_URL}/admin/usuarios/{usuario_id}", headers=headers)
+        if response.status_code == 200:
+            usuario_edit = response.json()
+        else:
+            messages.error(request, 'Usuario no encontrado')
+            return redirect('banco:admin_usuarios')
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
+        return redirect('banco:admin_usuarios')
+    
+    if request.method == 'POST':
+        try:
+            data = {}
+            if request.POST.get('nombres'):
+                data['nombres'] = request.POST.get('nombres')
+            if request.POST.get('email'):
+                data['email'] = request.POST.get('email')
+            if request.POST.get('telefono'):
+                data['telefono'] = request.POST.get('telefono')
+            if request.POST.get('password'):
+                data['password'] = request.POST.get('password')
+            if request.POST.get('activo'):
+                data['activo'] = request.POST.get('activo') == 'true'
+            
+            response = requests.put(
+                f"{settings.API_BASE_URL}/admin/usuarios/{usuario_id}",
+                json=data,
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                messages.success(request, 'Usuario actualizado exitosamente')
+                return redirect('banco:admin_usuarios')
+            else:
+                error_detail = response.json().get('detail', 'Error desconocido')
+                messages.error(request, f'Error: {error_detail}')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    return render(request, 'banco/editar_usuario.html', {
+        'usuario_edit': usuario_edit,
+        'usuario': usuario
+    })
+
+def admin_eliminar_usuario(request, usuario_id):
+    """Eliminar un usuario (solo admin)"""
+    usuario = request.session.get('usuario')
+    if not usuario or usuario.get('tipo') != 'admin':
+        messages.error(request, 'Acceso denegado.')
+        return redirect('banco:login')
+    
+    token = request.session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    try:
+        response = requests.delete(
+            f"{settings.API_BASE_URL}/admin/usuarios/{usuario_id}",
+            headers=headers
+        )
+        
+        if response.status_code == 200:
+            messages.success(request, '✅ Usuario y todos sus datos eliminados permanentemente')
+        else:
+            error_detail = response.json().get('detail', 'Error desconocido')
+            messages.error(request, f'Error: {error_detail}')
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
+    
+    return redirect('banco:admin_usuarios')
+
+# CRUD CLIENTES
+def admin_editar_cliente(request, cliente_id):
+    """Editar un cliente (solo admin)"""
+    usuario = request.session.get('usuario')
+    if not usuario or usuario.get('tipo') != 'admin':
+        messages.error(request, 'Acceso denegado.')
+        return redirect('banco:login')
+    
+    token = request.session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    # Obtener datos del cliente
+    try:
+        response = requests.get(f"{settings.API_BASE_URL}/admin/clientes/{cliente_id}", headers=headers)
+        if response.status_code == 200:
+            cliente_edit = response.json()
+        else:
+            messages.error(request, 'Cliente no encontrado')
+            return redirect('banco:clientes')
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
+        return redirect('banco:clientes')
+    
+    if request.method == 'POST':
+        try:
+            data = {}
+            if request.POST.get('tipo_identificacion'):
+                data['tipo_identificacion'] = request.POST.get('tipo_identificacion')
+            if request.POST.get('nombres'):
+                data['nombres'] = request.POST.get('nombres')
+            if request.POST.get('email'):
+                data['email'] = request.POST.get('email')
+            if request.POST.get('telefono'):
+                data['telefono'] = request.POST.get('telefono')
+            
+            response = requests.put(
+                f"{settings.API_BASE_URL}/admin/clientes/{cliente_id}",
+                json=data,
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                messages.success(request, 'Cliente actualizado exitosamente')
+                return redirect('banco:clientes')
+            else:
+                error_detail = response.json().get('detail', 'Error desconocido')
+                messages.error(request, f'Error: {error_detail}')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    return render(request, 'banco/editar_cliente.html', {
+        'cliente_edit': cliente_edit,
+        'usuario': usuario
+    })
+
+def admin_eliminar_cliente(request, cliente_id):
+    """Eliminar un cliente (solo admin)"""
+    usuario = request.session.get('usuario')
+    if not usuario or usuario.get('tipo') != 'admin':
+        messages.error(request, 'Acceso denegado.')
+        return redirect('banco:login')
+    
+    token = request.session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    try:
+        response = requests.delete(
+            f"{settings.API_BASE_URL}/admin/clientes/{cliente_id}",
+            headers=headers
+        )
+        
+        if response.status_code == 200:
+            messages.success(request, '✅ Cliente, usuario y todos sus datos eliminados permanentemente')
+        else:
+            error_detail = response.json().get('detail', 'Error desconocido')
+            messages.error(request, f'Error: {error_detail}')
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
+    
+    return redirect('banco:clientes')
+
+# CRUD CUENTAS
+def admin_editar_cuenta(request, cuenta_id):
+    """Editar una cuenta (solo admin)"""
+    usuario = request.session.get('usuario')
+    if not usuario or usuario.get('tipo') != 'admin':
+        messages.error(request, 'Acceso denegado.')
+        return redirect('banco:login')
+    
+    token = request.session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    # Obtener datos de la cuenta
+    try:
+        response = requests.get(f"{settings.API_BASE_URL}/admin/cuentas/{cuenta_id}", headers=headers)
+        if response.status_code == 200:
+            cuenta_edit = response.json()
+        else:
+            messages.error(request, 'Cuenta no encontrada')
+            return redirect('banco:cuentas')
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
+        return redirect('banco:cuentas')
+    
+    if request.method == 'POST':
+        try:
+            data = {}
+            if request.POST.get('tipo_cuenta'):
+                data['tipo_cuenta'] = request.POST.get('tipo_cuenta')
+            if request.POST.get('activa'):
+                data['activa'] = request.POST.get('activa') == 'true'
+            
+            response = requests.put(
+                f"{settings.API_BASE_URL}/admin/cuentas/{cuenta_id}",
+                json=data,
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                messages.success(request, 'Cuenta actualizada exitosamente')
+                return redirect('banco:cuentas')
+            else:
+                error_detail = response.json().get('detail', 'Error desconocido')
+                messages.error(request, f'Error: {error_detail}')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    return render(request, 'banco/editar_cuenta.html', {
+        'cuenta_edit': cuenta_edit,
+        'usuario': usuario
+    })
+
+def admin_eliminar_cuenta(request, cuenta_id):
+    """Eliminar una cuenta (solo admin)"""
+    usuario = request.session.get('usuario')
+    if not usuario or usuario.get('tipo') != 'admin':
+        messages.error(request, 'Acceso denegado.')
+        return redirect('banco:login')
+    
+    token = request.session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    try:
+        response = requests.delete(
+            f"{settings.API_BASE_URL}/admin/cuentas/{cuenta_id}",
+            headers=headers
+        )
+        
+        if response.status_code == 200:
+            messages.success(request, '✅ Cuenta y todas sus transacciones eliminadas permanentemente')
+        else:
+            error_detail = response.json().get('detail', 'Error desconocido')
+            messages.error(request, f'Error: {error_detail}')
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
+    
+    return redirect('banco:cuentas')
+
+# CRUD TRANSACCIONES
+def admin_transacciones(request):
+    """Ver todas las transacciones (solo admin)"""
+    usuario = request.session.get('usuario')
+    if not usuario or usuario.get('tipo') != 'admin':
+        messages.error(request, 'Acceso denegado.')
+        return redirect('banco:login')
+    
+    token = request.session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    try:
+        response = requests.get(f"{settings.API_BASE_URL}/admin/transacciones/", headers=headers)
+        if response.status_code == 200:
+            transacciones = response.json()
+        else:
+            transacciones = []
+            messages.error(request, 'Error al obtener transacciones')
+    except Exception as e:
+        transacciones = []
+        messages.error(request, f'Error de conexión: {str(e)}')
+    
+    return render(request, 'banco/transacciones_admin.html', {
+        'transacciones': transacciones,
+        'usuario': usuario
+    })
+
+def admin_editar_transaccion(request, transaccion_id):
+    """Editar una transacción (solo admin)"""
+    usuario = request.session.get('usuario')
+    if not usuario or usuario.get('tipo') != 'admin':
+        messages.error(request, 'Acceso denegado.')
+        return redirect('banco:login')
+    
+    token = request.session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    # Obtener datos de la transacción
+    try:
+        response = requests.get(f"{settings.API_BASE_URL}/admin/transacciones/{transaccion_id}", headers=headers)
+        if response.status_code == 200:
+            transaccion_edit = response.json()
+        else:
+            messages.error(request, 'Transacción no encontrada')
+            return redirect('banco:admin_transacciones')
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
+        return redirect('banco:admin_transacciones')
+    
+    if request.method == 'POST':
+        try:
+            data = {}
+            if request.POST.get('descripcion'):
+                data['descripcion'] = request.POST.get('descripcion')
+            
+            response = requests.put(
+                f"{settings.API_BASE_URL}/admin/transacciones/{transaccion_id}",
+                json=data,
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                messages.success(request, 'Transacción actualizada exitosamente')
+                return redirect('banco:admin_transacciones')
+            else:
+                error_detail = response.json().get('detail', 'Error desconocido')
+                messages.error(request, f'Error: {error_detail}')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    return render(request, 'banco/editar_transaccion.html', {
+        'transaccion_edit': transaccion_edit,
+        'usuario': usuario
+    })
+
+def admin_eliminar_transaccion(request, transaccion_id):
+    """Eliminar una transacción (solo admin)"""
+    usuario = request.session.get('usuario')
+    if not usuario or usuario.get('tipo') != 'admin':
+        messages.error(request, 'Acceso denegado.')
+        return redirect('banco:login')
+    
+    token = request.session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    try:
+        response = requests.delete(
+            f"{settings.API_BASE_URL}/admin/transacciones/{transaccion_id}",
+            headers=headers
+        )
+        
+        if response.status_code == 200:
+            messages.success(request, '✅ Transacción eliminada permanentemente de la base de datos')
+        else:
+            error_detail = response.json().get('detail', 'Error desconocido')
+            messages.error(request, f'Error: {error_detail}')
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
+    
+    return redirect('banco:admin_transacciones')

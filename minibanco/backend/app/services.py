@@ -611,4 +611,427 @@ class BancoService:
             
         return cuentas
 
-    # ... (los demás métodos existentes de BancoService)
+    # =================== CRUD USUARIOS ===================
+    @staticmethod
+    def obtener_usuarios(db: Session, skip: int = 0, limit: int = 100):
+        """Obtener todos los usuarios (solo admin)"""
+        from sqlalchemy import select
+        stmt = select(models.Usuario).offset(skip).limit(limit)
+        usuarios = db.execute(stmt).scalars().all()
+        return usuarios
+    
+    @staticmethod
+    def obtener_usuario_por_id(db: Session, usuario_id: int):
+        """Obtener un usuario por ID"""
+        from sqlalchemy import select
+        stmt = select(models.Usuario).where(models.Usuario.id == usuario_id)
+        usuario = db.execute(stmt).scalar_one_or_none()
+        if not usuario:
+            raise ValueError("Usuario no encontrado")
+        return usuario
+    
+    @staticmethod
+    def actualizar_usuario(db: Session, usuario_id: int, usuario_update: dict):
+        """Actualizar un usuario"""
+        from sqlalchemy import select
+        stmt = select(models.Usuario).where(models.Usuario.id == usuario_id)
+        usuario = db.execute(stmt).scalar_one_or_none()
+        
+        if not usuario:
+            raise ValueError("Usuario no encontrado")
+        
+        # Actualizar campos
+        if usuario_update.get('nombres'):
+            usuario.nombres = usuario_update['nombres']
+        if usuario_update.get('email'):
+            usuario.email = usuario_update['email']
+        if usuario_update.get('telefono'):
+            usuario.telefono = usuario_update['telefono']
+        if usuario_update.get('activo') is not None:
+            usuario.activo = usuario_update['activo']
+        if usuario_update.get('password'):
+            usuario.set_password(usuario_update['password'])
+        
+        db.commit()
+        db.refresh(usuario)
+        return usuario
+    
+    @staticmethod
+    def eliminar_usuario(db: Session, usuario_id: int):
+        """Eliminar un usuario permanentemente (incluye cliente, cuentas y transacciones asociadas)"""
+        from sqlalchemy import select
+        stmt = select(models.Usuario).where(models.Usuario.id == usuario_id)
+        usuario = db.execute(stmt).scalar_one_or_none()
+        
+        if not usuario:
+            raise ValueError("Usuario no encontrado")
+        
+        # No permitir eliminar admin principal
+        if usuario.username == 'admin':
+            raise ValueError("No se puede eliminar el usuario administrador principal")
+        
+        # Buscar el cliente asociado
+        cliente = db.execute(
+            select(models.Cliente).where(models.Cliente.usuario_id == usuario_id)
+        ).scalar_one_or_none()
+        
+        if cliente:
+            # Obtener todas las cuentas del cliente
+            cuentas = db.execute(
+                select(models.Cuenta).where(models.Cuenta.cliente_id == cliente.id)
+            ).scalars().all()
+            
+            # Eliminar transacciones de cada cuenta
+            for cuenta in cuentas:
+                db.execute(
+                    select(models.Transaccion).where(models.Transaccion.cuenta_id == cuenta.id)
+                )
+                db.query(models.Transaccion).filter(
+                    models.Transaccion.cuenta_id == cuenta.id
+                ).delete()
+            
+            # Eliminar todas las cuentas
+            db.query(models.Cuenta).filter(models.Cuenta.cliente_id == cliente.id).delete()
+            
+            # Eliminar el cliente
+            db.delete(cliente)
+        
+        # Eliminar el usuario
+        db.delete(usuario)
+        db.commit()
+        return {"mensaje": "Usuario y todos sus datos eliminados permanentemente"}
+
+    # =================== CRUD CLIENTES ===================
+    @staticmethod
+    def obtener_cliente_por_id(db: Session, cliente_id: int):
+        """Obtener un cliente por ID con información del usuario"""
+        from sqlalchemy import select
+        stmt = select(
+            models.Cliente,
+            models.Usuario.username
+        ).join(
+            models.Usuario,
+            models.Cliente.usuario_id == models.Usuario.id
+        ).where(
+            models.Cliente.id == cliente_id
+        )
+        
+        resultado = db.execute(stmt).first()
+        if not resultado:
+            raise ValueError("Cliente no encontrado")
+        
+        cliente, username = resultado
+        return {
+            'id': cliente.id,
+            'usuario_id': cliente.usuario_id,
+            'identificacion': cliente.identificacion,
+            'tipo_identificacion': cliente.tipo_identificacion,
+            'nombres': cliente.nombres,
+            'email': cliente.email,
+            'telefono': cliente.telefono,
+            'fecha_registro': cliente.fecha_registro,
+            'username': username
+        }
+    
+    @staticmethod
+    def actualizar_cliente(db: Session, cliente_id: int, cliente_update: dict):
+        """Actualizar información de un cliente"""
+        from sqlalchemy import select
+        stmt = select(models.Cliente).where(models.Cliente.id == cliente_id)
+        cliente = db.execute(stmt).scalar_one_or_none()
+        
+        if not cliente:
+            raise ValueError("Cliente no encontrado")
+        
+        # Actualizar campos
+        if cliente_update.get('tipo_identificacion'):
+            cliente.tipo_identificacion = cliente_update['tipo_identificacion']
+        if cliente_update.get('nombres'):
+            cliente.nombres = cliente_update['nombres']
+        if cliente_update.get('email'):
+            cliente.email = cliente_update['email']
+        if cliente_update.get('telefono'):
+            cliente.telefono = cliente_update['telefono']
+        
+        db.commit()
+        db.refresh(cliente)
+        
+        # Retornar con username
+        usuario = db.execute(
+            select(models.Usuario).where(models.Usuario.id == cliente.usuario_id)
+        ).scalar_one()
+        
+        return {
+            'id': cliente.id,
+            'usuario_id': cliente.usuario_id,
+            'identificacion': cliente.identificacion,
+            'tipo_identificacion': cliente.tipo_identificacion,
+            'nombres': cliente.nombres,
+            'email': cliente.email,
+            'telefono': cliente.telefono,
+            'fecha_registro': cliente.fecha_registro,
+            'username': usuario.username
+        }
+    
+    @staticmethod
+    def eliminar_cliente(db: Session, cliente_id: int):
+        """Eliminar un cliente permanentemente (incluye cuentas, transacciones y usuario asociado)"""
+        from sqlalchemy import select
+        stmt = select(models.Cliente).where(models.Cliente.id == cliente_id)
+        cliente = db.execute(stmt).scalar_one_or_none()
+        
+        if not cliente:
+            raise ValueError("Cliente no encontrado")
+        
+        # Verificar que el usuario asociado no sea admin
+        usuario = db.execute(
+            select(models.Usuario).where(models.Usuario.id == cliente.usuario_id)
+        ).scalar_one_or_none()
+        
+        if usuario and usuario.username == 'admin':
+            raise ValueError("No se puede eliminar el cliente asociado al administrador")
+        
+        # Obtener todas las cuentas del cliente
+        cuentas = db.execute(
+            select(models.Cuenta).where(models.Cuenta.cliente_id == cliente_id)
+        ).scalars().all()
+        
+        # Eliminar transacciones de cada cuenta
+        for cuenta in cuentas:
+            db.query(models.Transaccion).filter(
+                models.Transaccion.cuenta_id == cuenta.id
+            ).delete()
+        
+        # Eliminar todas las cuentas
+        db.query(models.Cuenta).filter(models.Cuenta.cliente_id == cliente_id).delete()
+        
+        # Eliminar el cliente
+        db.delete(cliente)
+        
+        # Eliminar el usuario asociado
+        if usuario:
+            db.delete(usuario)
+        
+        db.commit()
+        return {"mensaje": "Cliente, usuario y todos sus datos eliminados permanentemente"}
+
+    # =================== CRUD CUENTAS ===================
+    @staticmethod
+    def obtener_cuenta_por_id(db: Session, cuenta_id: int):
+        """Obtener una cuenta por ID con información del cliente"""
+        from sqlalchemy import select
+        stmt = select(
+            models.Cuenta,
+            models.Cliente.nombres.label('cliente_nombre')
+        ).join(
+            models.Cliente,
+            models.Cuenta.cliente_id == models.Cliente.id
+        ).where(
+            models.Cuenta.id == cuenta_id
+        )
+        
+        resultado = db.execute(stmt).first()
+        if not resultado:
+            raise ValueError("Cuenta no encontrada")
+        
+        cuenta, cliente_nombre = resultado
+        return {
+            'id': cuenta.id,
+            'cliente_id': cuenta.cliente_id,
+            'numero_cuenta': cuenta.numero_cuenta,
+            'tipo_cuenta': cuenta.tipo_cuenta,
+            'saldo': float(cuenta.saldo),
+            'fecha_apertura': cuenta.fecha_apertura,
+            'activa': cuenta.activa,
+            'cliente_nombre': cliente_nombre
+        }
+    
+    @staticmethod
+    def actualizar_cuenta(db: Session, cuenta_id: int, cuenta_update: dict):
+        """Actualizar una cuenta"""
+        from sqlalchemy import select
+        stmt = select(models.Cuenta).where(models.Cuenta.id == cuenta_id)
+        cuenta = db.execute(stmt).scalar_one_or_none()
+        
+        if not cuenta:
+            raise ValueError("Cuenta no encontrada")
+        
+        # Actualizar campos permitidos
+        if cuenta_update.get('tipo_cuenta'):
+            tipos_validos = ['AHORROS', 'CORRIENTE', 'CDT']
+            if cuenta_update['tipo_cuenta'] not in tipos_validos:
+                raise ValueError(f"Tipo de cuenta no válido. Debe ser: {', '.join(tipos_validos)}")
+            cuenta.tipo_cuenta = cuenta_update['tipo_cuenta']
+        
+        if cuenta_update.get('activa') is not None:
+            cuenta.activa = cuenta_update['activa']
+        
+        db.commit()
+        db.refresh(cuenta)
+        
+        # Obtener nombre del cliente
+        cliente = db.execute(
+            select(models.Cliente).where(models.Cliente.id == cuenta.cliente_id)
+        ).scalar_one()
+        
+        return {
+            'id': cuenta.id,
+            'cliente_id': cuenta.cliente_id,
+            'numero_cuenta': cuenta.numero_cuenta,
+            'tipo_cuenta': cuenta.tipo_cuenta,
+            'saldo': float(cuenta.saldo),
+            'fecha_apertura': cuenta.fecha_apertura,
+            'activa': cuenta.activa,
+            'cliente_nombre': cliente.nombres
+        }
+    
+    @staticmethod
+    def eliminar_cuenta(db: Session, cuenta_id: int):
+        """Eliminar una cuenta permanentemente (incluye transacciones asociadas)"""
+        from sqlalchemy import select
+        stmt = select(models.Cuenta).where(models.Cuenta.id == cuenta_id)
+        cuenta = db.execute(stmt).scalar_one_or_none()
+        
+        if not cuenta:
+            raise ValueError("Cuenta no encontrada")
+        
+        # Eliminar todas las transacciones asociadas a la cuenta
+        db.query(models.Transaccion).filter(
+            models.Transaccion.cuenta_id == cuenta_id
+        ).delete()
+        
+        # Eliminar la cuenta
+        db.delete(cuenta)
+        db.commit()
+        return {"mensaje": "Cuenta y todas sus transacciones eliminadas permanentemente"}
+
+    # =================== CRUD TRANSACCIONES ===================
+    @staticmethod
+    def obtener_todas_transacciones(db: Session, skip: int = 0, limit: int = 100):
+        """Obtener todas las transacciones (solo admin)"""
+        from sqlalchemy import select
+        stmt = select(
+            models.Transaccion,
+            models.Cuenta.numero_cuenta,
+            models.Cliente.nombres.label('cliente_nombre')
+        ).join(
+            models.Cuenta,
+            models.Transaccion.cuenta_id == models.Cuenta.id
+        ).join(
+            models.Cliente,
+            models.Cuenta.cliente_id == models.Cliente.id
+        ).order_by(
+            models.Transaccion.fecha_transaccion.desc()
+        ).offset(skip).limit(limit)
+        
+        resultados = db.execute(stmt).all()
+        
+        transacciones = []
+        for transaccion, numero_cuenta, cliente_nombre in resultados:
+            trans_dict = {
+                'id': transaccion.id,
+                'cuenta_id': transaccion.cuenta_id,
+                'tipo': transaccion.tipo,
+                'monto': float(transaccion.monto) if transaccion.monto else None,
+                'descripcion': transaccion.descripcion,
+                'fecha_transaccion': transaccion.fecha_transaccion,
+                'saldo_anterior': float(transaccion.saldo_anterior),
+                'saldo_posterior': float(transaccion.saldo_posterior),
+                'cuenta_numero': numero_cuenta,
+                'cliente_nombre': cliente_nombre
+            }
+            transacciones.append(trans_dict)
+        
+        return transacciones
+    
+    @staticmethod
+    def obtener_transaccion_por_id(db: Session, transaccion_id: int):
+        """Obtener una transacción por ID"""
+        from sqlalchemy import select
+        stmt = select(
+            models.Transaccion,
+            models.Cuenta.numero_cuenta,
+            models.Cliente.nombres.label('cliente_nombre')
+        ).join(
+            models.Cuenta,
+            models.Transaccion.cuenta_id == models.Cuenta.id
+        ).join(
+            models.Cliente,
+            models.Cuenta.cliente_id == models.Cliente.id
+        ).where(
+            models.Transaccion.id == transaccion_id
+        )
+        
+        resultado = db.execute(stmt).first()
+        if not resultado:
+            raise ValueError("Transacción no encontrada")
+        
+        transaccion, numero_cuenta, cliente_nombre = resultado
+        return {
+            'id': transaccion.id,
+            'cuenta_id': transaccion.cuenta_id,
+            'tipo': transaccion.tipo,
+            'monto': float(transaccion.monto) if transaccion.monto else None,
+            'descripcion': transaccion.descripcion,
+            'fecha_transaccion': transaccion.fecha_transaccion,
+            'saldo_anterior': float(transaccion.saldo_anterior),
+            'saldo_posterior': float(transaccion.saldo_posterior),
+            'cuenta_numero': numero_cuenta,
+            'cliente_nombre': cliente_nombre
+        }
+    
+    @staticmethod
+    def actualizar_transaccion(db: Session, transaccion_id: int, transaccion_update: dict):
+        """Actualizar descripción de una transacción"""
+        from sqlalchemy import select
+        stmt = select(models.Transaccion).where(models.Transaccion.id == transaccion_id)
+        transaccion = db.execute(stmt).scalar_one_or_none()
+        
+        if not transaccion:
+            raise ValueError("Transacción no encontrada")
+        
+        # Solo permitir actualizar descripción
+        if transaccion_update.get('descripcion'):
+            transaccion.descripcion = transaccion_update['descripcion']
+        
+        db.commit()
+        db.refresh(transaccion)
+        
+        # Obtener información adicional
+        cuenta = db.execute(
+            select(models.Cuenta).where(models.Cuenta.id == transaccion.cuenta_id)
+        ).scalar_one()
+        
+        cliente = db.execute(
+            select(models.Cliente).where(models.Cliente.id == cuenta.cliente_id)
+        ).scalar_one()
+        
+        return {
+            'id': transaccion.id,
+            'cuenta_id': transaccion.cuenta_id,
+            'tipo': transaccion.tipo,
+            'monto': float(transaccion.monto) if transaccion.monto else None,
+            'descripcion': transaccion.descripcion,
+            'fecha_transaccion': transaccion.fecha_transaccion,
+            'saldo_anterior': float(transaccion.saldo_anterior),
+            'saldo_posterior': float(transaccion.saldo_posterior),
+            'cuenta_numero': cuenta.numero_cuenta,
+            'cliente_nombre': cliente.nombres
+        }
+    
+    @staticmethod
+    def eliminar_transaccion(db: Session, transaccion_id: int):
+        """Eliminar una transacción (solo descripción, no afecta saldos)"""
+        from sqlalchemy import select
+        stmt = select(models.Transaccion).where(models.Transaccion.id == transaccion_id)
+        transaccion = db.execute(stmt).scalar_one_or_none()
+        
+        if not transaccion:
+            raise ValueError("Transacción no encontrada")
+        
+        # NOTA: En un sistema real, no deberías eliminar transacciones
+        # porque afectaría la integridad contable. Aquí lo permitimos solo para CRUD completo.
+        # En producción, mejor sería marcarla como "anulada" o algo similar.
+        db.delete(transaccion)
+        db.commit()
+        return {"mensaje": "Transacción eliminada exitosamente"}

@@ -82,6 +82,7 @@
                                 <th>Tipo</th>
                                 <th>Saldo</th>
                                 <th>Estado</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -104,6 +105,18 @@
                                     <span class="badge {% if cuenta.activa %}bg-success{% else %}bg-danger{% endif %}">
                                         {% if cuenta.activa %}Activa{% else %}Inactiva{% endif %}
                                     </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'banco:admin_editar_cuenta' cuenta.id %}"
+                                        class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'banco:admin_eliminar_cuenta' cuenta.id %}"
+                                        class="btn btn-sm btn-danger"
+                                        onclick="return confirm('⚠️ ADVERTENCIA: Esta acción eliminará PERMANENTEMENTE la cuenta y TODAS sus transacciones. Esta acción NO se puede deshacer. ¿Está completamente seguro?')"
+                                        title="Eliminar permanentemente">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
