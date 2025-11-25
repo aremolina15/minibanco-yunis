@@ -1,0 +1,236 @@
+{% extends 'banco/base.html' %}
+
+{% block title %}Transacciones - Minibanco{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>💰 Operaciones Bancarias</h2>
+        <p class="text-muted">Realiza consignaciones, retiros y consultas de saldo</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Formulario de Transacciones -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">💸 Realizar Transacción</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="transaccionForm">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Transacción</label>
+                        <select name="tipo" class="form-select" id="tipoTransaccion" required>
+                            <option value="">Selecciona el tipo...</option>
+                            <option value="CONSIGNACION">Consignación</option>
+                            <option value="RETIRO">Retiro</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Cuenta</label>
+                        <select name="cuenta_id" class="form-select" id="cuentaSelect" required>
+                            <option value="">Selecciona una cuenta...</option>
+                            {% for cuenta in cuentas %}
+                            <option value="{{ cuenta.id }}" data-saldo="{{ cuenta.saldo }}">
+                                {{ cuenta.numero_cuenta }} - {{ cuenta.cliente_nombre }} (Saldo: ${{ cuenta.saldo }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if not cuentas %}
+                        <div class="text-danger small mt-1">
+                            No hay cuentas registradas. <a href="{% url 'banco:cuentas' %}">Abre una cuenta primero</a>.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Monto</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" name="monto" class="form-control" id="montoInput" min="0" step="0.01"
+                                required>
+                        </div>
+                        <div class="form-text" id="montoHelp">
+                            Ingresa el monto de la transacción
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Descripción (Opcional)</label>
+                        <textarea name="descripcion" class="form-control" rows="2"
+                            placeholder="Ej: Consignación inicial"></textarea>
+                    </div>
+
+                    {% if not cuentas %}
+                    <button type="submit" class="btn btn-success w-100" id="submitBtn" disabled>
+                        ✅ Ejecutar Transacción
+                    </button>
+                    {% else %}
+                    <button type="submit" class="btn btn-success w-100" id="submitBtn">
+                        ✅ Ejecutar Transacción
+                    </button>
+                    {% endif %}
+                </form>
+
+                <hr>
+
+                <!-- Consulta de Saldo -->
+                <form method="POST" action="{% url 'banco:consultar_saldo' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Consultar Saldo</label>
+                        <select name="cuenta_id" class="form-select" required>
+                            <option value="">Selecciona una cuenta...</option>
+                            {% for cuenta in cuentas %}
+                            <option value="{{ cuenta.id }}">
+                                {{ cuenta.numero_cuenta }} - {{ cuenta.cliente_nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if not cuentas %}
+                    <button type="submit" class="btn btn-info w-100" disabled>
+                        📊 Consultar Saldo
+                    </button>
+                    {% else %}
+                    <button type="submit" class="btn btn-info w-100">
+                        📊 Consultar Saldo
+                    </button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de Cuentas -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📋 Cuentas Disponibles</h5>
+            </div>
+            <div class="card-body">
+                {% if cuentas %}
+                <div class="list-group">
+                    {% for cuenta in cuentas %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ cuenta.numero_cuenta }}</h6>
+                            {% if cuenta.tipo_cuenta == 'AHORROS' %}
+                            <span class="badge bg-success">{{ cuenta.tipo_cuenta }}</span>
+                            {% elif cuenta.tipo_cuenta == 'CORRIENTE' %}
+                            <span class="badge bg-primary">{{ cuenta.tipo_cuenta }}</span>
+                            {% else %}
+                            <span class="badge bg-warning">{{ cuenta.tipo_cuenta }}</span>
+                            {% endif %}
+                        </div>
+                        <p class="mb-1">{{ cuenta.cliente_nombre }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong class="text-success">${{ cuenta.saldo }}</strong>
+                            <small class="text-muted">
+                                {% if cuenta.activa %}
+                                <span class="text-success">● Activa</span>
+                                {% else %}
+                                <span class="text-danger">● Inactiva</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted">No hay cuentas disponibles</p>
+                    <p class="text-muted small">Ve a la sección de cuentas para crear una</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Información de Transacciones -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">ℹ️ Tipos de Transacción</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center p-2 border rounded bg-light">
+                            <h6 class="text-success">Consignación</h6>
+                            <small class="text-muted">Agregar dinero a la cuenta</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-2 border rounded bg-light">
+                            <h6 class="text-danger">Retiro</h6>
+                            <small class="text-muted">Retirar dinero de la cuenta</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tipoTransaccion = document.getElementById('tipoTransaccion');
+        const cuentaSelect = document.getElementById('cuentaSelect');
+        const montoInput = document.getElementById('montoInput');
+        const montoHelp = document.getElementById('montoHelp');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function actualizarInterfaz() {
+            const tipo = tipoTransaccion.value;
+            const cuentaOption = cuentaSelect.options[cuentaSelect.selectedIndex];
+            const saldo = cuentaOption ? parseFloat(cuentaOption.getAttribute('data-saldo')) : 0;
+
+            // Actualizar texto de ayuda
+            if (tipo === 'RETIRO') {
+                montoHelp.innerHTML = `Saldo disponible: $${saldo.toFixed(2)}`;
+                montoHelp.className = 'form-text text-warning';
+            } else {
+                montoHelp.innerHTML = 'Ingresa el monto a consignar';
+                montoHelp.className = 'form-text text-muted';
+            }
+
+            // Actualizar texto del botón
+            if (tipo === 'CONSIGNACION') {
+                submitBtn.innerHTML = '💰 Realizar Consignación';
+                submitBtn.className = 'btn btn-success w-100';
+            } else if (tipo === 'RETIRO') {
+                submitBtn.innerHTML = '💸 Realizar Retiro';
+                submitBtn.className = 'btn btn-warning w-100';
+            } else {
+                submitBtn.innerHTML = '✅ Ejecutar Transacción';
+                submitBtn.className = 'btn btn-secondary w-100';
+            }
+        }
+
+        tipoTransaccion.addEventListener('change', actualizarInterfaz);
+        cuentaSelect.addEventListener('change', actualizarInterfaz);
+
+        // Validación de monto para retiros
+        document.getElementById('transaccionForm').addEventListener('submit', function (e) {
+            const tipo = tipoTransaccion.value;
+            const cuentaOption = cuentaSelect.options[cuentaSelect.selectedIndex];
+            const saldo = cuentaOption ? parseFloat(cuentaOption.getAttribute('data-saldo')) : 0;
+            const monto = parseFloat(montoInput.value);
+
+            if (tipo === 'RETIRO' && monto > saldo) {
+                e.preventDefault();
+                alert('❌ Error: El monto del retiro no puede ser mayor al saldo disponible.');
+                montoInput.focus();
+            }
+        });
+
+        // Inicializar interfaz
+        actualizarInterfaz();
+    });
+</script>
+{% endblock %}

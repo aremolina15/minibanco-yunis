@@ -1,0 +1,53 @@
+{% extends 'banco/base.html' %}
+
+{% block title %}Iniciar Sesión - Minibanco{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">🔐 Iniciar Sesión</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de Usuario</label>
+                        <input type="text" name="username" class="form-control" placeholder="Ingresa tu username"
+                            required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" name="password" class="form-control" placeholder="Ingresa tu contraseña"
+                            required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        🚀 Iniciar Sesión
+                    </button>
+                </form>
+
+                <hr>
+
+                <div class="text-center">
+                    <p class="mb-0">¿No tienes cuenta?</p>
+                    <a href="{% url 'banco:registro' %}" class="btn btn-outline-success btn-sm mt-2">
+                        📝 Regístrate aquí
+                    </a>
+                </div>
+
+                <div class="mt-4">
+                    <h6>Credenciales de prueba:</h6>
+                    <div class="small">
+                        <strong>Admin:</strong> admin / admin123<br>
+                        <strong>Cliente:</strong> Regístrate para crear una cuenta
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
