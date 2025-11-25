@@ -425,6 +425,202 @@ def listar_todas_mis_cuentas(
     cuentas = services.BancoService.obtener_cuentas_por_cliente(db, cliente.id)
     return cuentas
 
+# =================== ENDPOINTS CRUD PARA ADMINISTRADOR ===================
+
+# CRUD USUARIOS
+@app.get("/admin/usuarios/", response_model=list[schemas.UsuarioResponse])
+def admin_listar_usuarios(
+    skip: int = 0,
+    limit: int = 100,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Listar todos los usuarios (solo admin)"""
+    usuarios = services.BancoService.obtener_usuarios(db, skip, limit)
+    return usuarios
+
+@app.get("/admin/usuarios/{usuario_id}", response_model=schemas.UsuarioResponse)
+def admin_obtener_usuario(
+    usuario_id: int,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Obtener un usuario específico (solo admin)"""
+    try:
+        usuario = services.BancoService.obtener_usuario_por_id(db, usuario_id)
+        return usuario
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@app.put("/admin/usuarios/{usuario_id}", response_model=schemas.UsuarioResponse)
+def admin_actualizar_usuario(
+    usuario_id: int,
+    usuario_update: schemas.UsuarioUpdate,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Actualizar un usuario (solo admin)"""
+    try:
+        usuario_actualizado = services.BancoService.actualizar_usuario(
+            db, usuario_id, usuario_update.dict(exclude_unset=True)
+        )
+        return usuario_actualizado
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@app.delete("/admin/usuarios/{usuario_id}")
+def admin_eliminar_usuario(
+    usuario_id: int,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Eliminar (desactivar) un usuario (solo admin)"""
+    try:
+        resultado = services.BancoService.eliminar_usuario(db, usuario_id)
+        return resultado
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# CRUD CLIENTES
+@app.get("/admin/clientes/{cliente_id}", response_model=schemas.ClienteResponse)
+def admin_obtener_cliente(
+    cliente_id: int,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Obtener un cliente específico (solo admin)"""
+    try:
+        cliente = services.BancoService.obtener_cliente_por_id(db, cliente_id)
+        return cliente
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@app.put("/admin/clientes/{cliente_id}", response_model=schemas.ClienteResponse)
+def admin_actualizar_cliente(
+    cliente_id: int,
+    cliente_update: schemas.ClienteUpdate,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Actualizar un cliente (solo admin)"""
+    try:
+        cliente_actualizado = services.BancoService.actualizar_cliente(
+            db, cliente_id, cliente_update.dict(exclude_unset=True)
+        )
+        return cliente_actualizado
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/admin/clientes/{cliente_id}")
+def admin_eliminar_cliente(
+    cliente_id: int,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Eliminar (desactivar) un cliente (solo admin)"""
+    try:
+        resultado = services.BancoService.eliminar_cliente(db, cliente_id)
+        return resultado
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# CRUD CUENTAS
+@app.get("/admin/cuentas/{cuenta_id}", response_model=schemas.CuentaResponse)
+def admin_obtener_cuenta(
+    cuenta_id: int,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Obtener una cuenta específica (solo admin)"""
+    try:
+        cuenta = services.BancoService.obtener_cuenta_por_id(db, cuenta_id)
+        return cuenta
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@app.put("/admin/cuentas/{cuenta_id}", response_model=schemas.CuentaResponse)
+def admin_actualizar_cuenta(
+    cuenta_id: int,
+    cuenta_update: schemas.CuentaUpdate,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Actualizar una cuenta (solo admin)"""
+    try:
+        cuenta_actualizada = services.BancoService.actualizar_cuenta(
+            db, cuenta_id, cuenta_update.dict(exclude_unset=True)
+        )
+        return cuenta_actualizada
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/admin/cuentas/{cuenta_id}")
+def admin_eliminar_cuenta(
+    cuenta_id: int,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Eliminar (desactivar) una cuenta (solo admin)"""
+    try:
+        resultado = services.BancoService.eliminar_cuenta(db, cuenta_id)
+        return resultado
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# CRUD TRANSACCIONES
+@app.get("/admin/transacciones/", response_model=list[schemas.TransaccionResponse])
+def admin_listar_transacciones(
+    skip: int = 0,
+    limit: int = 100,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Listar todas las transacciones (solo admin)"""
+    transacciones = services.BancoService.obtener_todas_transacciones(db, skip, limit)
+    return transacciones
+
+@app.get("/admin/transacciones/{transaccion_id}", response_model=schemas.TransaccionResponse)
+def admin_obtener_transaccion(
+    transaccion_id: int,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Obtener una transacción específica (solo admin)"""
+    try:
+        transaccion = services.BancoService.obtener_transaccion_por_id(db, transaccion_id)
+        return transaccion
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@app.put("/admin/transacciones/{transaccion_id}", response_model=schemas.TransaccionResponse)
+def admin_actualizar_transaccion(
+    transaccion_id: int,
+    transaccion_update: schemas.TransaccionUpdate,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Actualizar una transacción (solo admin)"""
+    try:
+        transaccion_actualizada = services.BancoService.actualizar_transaccion(
+            db, transaccion_id, transaccion_update.dict(exclude_unset=True)
+        )
+        return transaccion_actualizada
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/admin/transacciones/{transaccion_id}")
+def admin_eliminar_transaccion(
+    transaccion_id: int,
+    current_user = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Eliminar una transacción (solo admin)"""
+    try:
+        resultado = services.BancoService.eliminar_transaccion(db, transaccion_id)
+        return resultado
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)

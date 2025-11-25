@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sqlite3
-import hashlib
-import secrets
+import bcrypt
 
 def recreate_database():
     # Ruta de la base de datos
@@ -22,13 +21,12 @@ def recreate_database():
     
     print("🔧 Creando tablas...")
     
-    # Tabla de usuarios (con salt nullable)
+    # Tabla de usuarios (sin salt, bcrypt maneja su propio salt)
     cursor.execute('''
         CREATE TABLE usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username VARCHAR(50) UNIQUE NOT NULL,
             password_hash VARCHAR(255) NOT NULL,
-            salt VARCHAR(32) DEFAULT '',
             tipo VARCHAR(20) NOT NULL,
             identificacion VARCHAR(20) UNIQUE,
             nombres VARCHAR(100),
@@ -87,25 +85,21 @@ def recreate_database():
     
     # Crear usuario admin
     print("👤 Creando usuario admin...")
-    salt_admin = secrets.token_hex(16)
-    password_with_salt = 'admin123' + salt_admin
-    password_hash = hashlib.sha256(password_with_salt.encode('utf-8')).hexdigest()
+    password_hash_admin = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     
     cursor.execute('''
-        INSERT INTO usuarios (username, password_hash, salt, tipo, nombres, email)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', ('admin', password_hash, salt_admin, 'admin', 'Administrador del Sistema', 'admin@minibanco.com'))
+        INSERT INTO usuarios (username, password_hash, tipo, nombres, email)
+        VALUES (?, ?, ?, ?, ?)
+    ''', ('admin', password_hash_admin, 'admin', 'Administrador del Sistema', 'admin@minibanco.com'))
     
     # Crear usuario cliente de prueba
     print("👤 Creando cliente de prueba...")
-    salt_cliente = secrets.token_hex(16)
-    password_with_salt_cliente = 'cliente123' + salt_cliente
-    password_hash_cliente = hashlib.sha256(password_with_salt_cliente.encode('utf-8')).hexdigest()
+    password_hash_cliente = bcrypt.hashpw('cliente123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     
     cursor.execute('''
-        INSERT INTO usuarios (username, password_hash, salt, tipo, identificacion, nombres, email, telefono)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', ('cliente_test', password_hash_cliente, salt_cliente, 'cliente', '123456789', 'Cliente de Prueba', 'cliente@test.com', '3001234567'))
+        INSERT INTO usuarios (username, password_hash, tipo, identificacion, nombres, email, telefono)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', ('cliente_test', password_hash_cliente, 'cliente', '123456789', 'Cliente de Prueba', 'cliente@test.com', '3001234567'))
     
     usuario_id = cursor.lastrowid
     

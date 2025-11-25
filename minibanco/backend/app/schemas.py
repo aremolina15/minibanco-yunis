@@ -120,3 +120,24 @@ class TransferenciaRequest(BaseModel):
     cuenta_destino_id: int
     monto: Decimal
     descripcion: Optional[str] = "Transferencia entre cuentas"
+
+# Schemas para actualización (CRUD)
+class UsuarioUpdate(BaseModel):
+    nombres: Optional[str] = None
+    email: Optional[str] = None
+    telefono: Optional[str] = None
+    activo: Optional[bool] = None
+    password: Optional[str] = None  # Si se incluye, se actualiza la contraseña
+
+class ClienteUpdate(BaseModel):
+    tipo_identificacion: Optional[str] = None
+    nombres: Optional[str] = None
+    email: Optional[str] = None
+    telefono: Optional[str] = None
+
+class CuentaUpdate(BaseModel):
+    tipo_cuenta: Optional[str] = None
+    activa: Optional[bool] = None
+
+class TransaccionUpdate(BaseModel):
+    descripcion: Optional[str] = None

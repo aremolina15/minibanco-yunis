@@ -107,6 +107,7 @@
                                 <th>Nombres</th>
                                 <th>Email</th>
                                 <th>Teléfono</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -123,6 +124,18 @@
                                 <td>{{ cliente.nombres }}</td>
                                 <td>{{ cliente.email }}</td>
                                 <td>{{ cliente.telefono }}</td>
+                                <td>
+                                    <a href="{% url 'banco:admin_editar_cliente' cliente.id %}"
+                                        class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'banco:admin_eliminar_cliente' cliente.id %}"
+                                        class="btn btn-sm btn-danger"
+                                        onclick="return confirm('⚠️ ADVERTENCIA: Esta acción eliminará PERMANENTEMENTE el cliente, usuario, todas sus cuentas y transacciones. Esta acción NO se puede deshacer. ¿Está completamente seguro?')"
+                                        title="Eliminar permanentemente">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>

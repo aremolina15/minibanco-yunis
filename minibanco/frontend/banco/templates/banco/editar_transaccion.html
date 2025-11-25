@@ -1,0 +1,98 @@
+{% extends 'banco/base.html' %}
+{% load static %}
+
+{% block title %}Editar Transacción - Minibanco{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="fas fa-edit"></i> Editar Transacción</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Información:</strong> Solo puede editar la descripción de la transacción. 
+                        Los montos y saldos no se pueden modificar para mantener la integridad contable.
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>ID:</strong></label>
+                                <input type="text" class="form-control" value="{{ transaccion_edit.id }}" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Fecha:</strong></label>
+                                <input type="text" class="form-control" 
+                                       value="{{ transaccion_edit.fecha_transaccion|date:'d/m/Y H:i' }}" disabled>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Tipo:</strong></label>
+                                <input type="text" class="form-control" value="{{ transaccion_edit.tipo }}" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Cuenta:</strong></label>
+                                <input type="text" class="form-control" value="{{ transaccion_edit.cuenta_numero }}" disabled>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Cliente:</strong></label>
+                            <input type="text" class="form-control" value="{{ transaccion_edit.cliente_nombre }}" disabled>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label"><strong>Monto:</strong></label>
+                                <input type="text" class="form-control" 
+                                       value="{% if transaccion_edit.monto %}${{ transaccion_edit.monto }}{% else %}N/A{% endif %}" disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label"><strong>Saldo Anterior:</strong></label>
+                                <input type="text" class="form-control" value="${{ transaccion_edit.saldo_anterior }}" disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label"><strong>Saldo Posterior:</strong></label>
+                                <input type="text" class="form-control" value="${{ transaccion_edit.saldo_posterior }}" disabled>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" 
+                                      rows="3" required>{{ transaccion_edit.descripcion }}</textarea>
+                            <small class="text-muted">Este es el único campo editable</small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                            <a href="{% url 'banco:admin_transacciones' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

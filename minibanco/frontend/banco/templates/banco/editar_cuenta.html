@@ -1,0 +1,79 @@
+{% extends 'banco/base.html' %}
+{% load static %}
+
+{% block title %}Editar Cuenta - Minibanco{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="fas fa-wallet"></i> Editar Cuenta</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Número de Cuenta:</strong></label>
+                            <input type="text" class="form-control" value="{{ cuenta_edit.numero_cuenta }}" disabled>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Cliente:</strong></label>
+                            <input type="text" class="form-control" value="{{ cuenta_edit.cliente_nombre }}" disabled>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Saldo Actual:</strong></label>
+                            <input type="text" class="form-control" value="${{ cuenta_edit.saldo }}" disabled>
+                            <small class="text-muted">El saldo no se puede modificar directamente</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tipo_cuenta" class="form-label">Tipo de Cuenta</label>
+                            <select class="form-select" id="tipo_cuenta" name="tipo_cuenta">
+                                <option value="AHORROS" {% if cuenta_edit.tipo_cuenta == 'AHORROS' %}selected{% endif %}>Ahorros</option>
+                                <option value="CORRIENTE" {% if cuenta_edit.tipo_cuenta == 'CORRIENTE' %}selected{% endif %}>Corriente</option>
+                                <option value="CDT" {% if cuenta_edit.tipo_cuenta == 'CDT' %}selected{% endif %}>CDT</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="activa" class="form-label">Estado</label>
+                            <select class="form-select" id="activa" name="activa">
+                                <option value="true" {% if cuenta_edit.activa %}selected{% endif %}>Activa</option>
+                                <option value="false" {% if not cuenta_edit.activa %}selected{% endif %}>Inactiva</option>
+                            </select>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            <strong>Nota:</strong> Cambiar el tipo de cuenta o desactivarla puede afectar las transacciones del cliente.
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                            <a href="{% url 'banco:cuentas' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
